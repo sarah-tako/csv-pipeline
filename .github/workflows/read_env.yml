@@ -1,18 +1,32 @@
-import os
-import pandas as pd
+name: Lecture CSV selon environnement
 
-env = os.environ.get("ENVIRONMENT", "dev")
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Choisir l’environnement : dev, test ou prod'
+        required: true
+        default: 'dev'
 
-file_map = {
-    "dev": "data/dev.csv",
-    "test": "data/test.csv",
-    "prod": "data/prod.csv"
-}
+jobs:
+  read-csv-job:
+    runs-on: ubuntu-latest
+    env:
+      # Passe la sélection utilisateur à une variable d'environnement
+      ENVIRONMENT: ${{ github.event.inputs.environment }}
 
-file_path = file_map.get(env.lower())
-if not file_path:
-    raise ValueError(f"Environnement inconnu : {env}")
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-print(f"=== Lecture du fichier pour l'environnement : {env} ===")
-df = pd.read_csv(file_path)
-print(df)
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: pip install pandas # Assurez-vous que cette ligne est correcte si vous n'utilisez pas requirements.txt
+
+      - name: Run Python script
+        # Le script Python doit lire la variable $ENVIRONMENT pour choisir le fichier
+        run: python scripts/read_csv.py
